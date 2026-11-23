@@ -1,42 +1,46 @@
 <!DOCTYPE html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KASE Live</title>
-<style>body{font-family:Arial,sans-serif;margin:0;background:#f2f2f2}header{background:#0b3d91;color:#fff;padding:16px}header h1{margin:0;font-size:20px}.wrap{padding:12px;max-width:720px;margin:0 auto}.card{background:#fff;border-radius:12px;padding:12px;margin:10px 0}.ok{color:#0a7a42}.sred{color:#b77900}input,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;font-size:16px}button{width:100%;padding:12px;background:#0b3d91;color:#fff;border:0;border-radius:10px;font-size:16px}.live{background:#e6f4ea;padding:10px;border-radius:8px;margin:10px 0}</style></head>
-<body><header><h1>KASE — Облигации LIVE</h1><p>Цены обновляются каждые 15 минут с ноутбука</p></header>
+<title>KASE LIVE</title>
+<style>body{font-family:Arial,sans-serif;margin:0;background:#f2f2f2}header{background:#0b3d91;color:#fff;padding:16px}header h1{margin:0;font-size:20px}.wrap{padding:12px;max-width:720px;margin:0 auto}.card{background:#fff;border-radius:12px;padding:12px;margin:10px 0}.ok{color:#0a7a42}.sred{color:#b77900}.risk{color:#c00}input,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;font-size:16px}button{width:100%;padding:12px;background:#0b3d91;color:#fff;border:0;border-radius:10px;font-size:16px}.live{background:#e6f4ea;padding:10px;border-radius:8px;margin:10px 0}</style></head>
+<body><header><h1>KASE — Облигации LIVE</h1><p>Настоящие цены с KASE, обновление каждые 15 минут, ноутбук не нужен</p></header>
 <div class="wrap">
-<div class="live">Последнее обновление: <b id="updated">еще не обновлялось</b><br><small>Облигации торгуются редко, 15 минут — это и есть реальное время для них</small></div>
+<div class="live">Последнее обновление: <b id="updated">загружаю...</b><br><span id="status" style="font-size:13px"></span></div>
 <button onclick="refreshData()">🔄 Обновить цены сейчас</button>
-<p><small>Если кнопка не работает — ты не подключен к домашнему Wi-Fi, где работает ноутбук-сервер</small></p>
+<p><small>Первый раз после запуска настоящие цены появятся через 2-3 минуты, пока показаны сохраненные.</small></p>
 <label>Моя сумма, ₸</label><input id="summa" type="number" value="30000">
-<div id="list"></div>
+<div style="display:flex;gap:8px"><div style="flex:1"><label>Риск</label><select id="risk"><option value="all">Все</option><option value="ОК">Только ОК</option><option value="сред">Только сред</option></select></div><div style="flex:1"><label>Срок до</label><select id="days"><option value="9999">Любой</option><option value="365">До 1 года</option><option value="1095">До 3 лет</option><option value="1825">До 5 лет</option></select></div></div>
+<label>Поиск</label><input id="search" placeholder="BRKZb36">
+<p id="count"></p><div id="list"></div>
 </div>
 <script>
-const DATA = [
-{"code":"BRKZb36","price":99.98,"days":2510,"coupon":15.6,"yld":15.6,"risk":"ОК"},
-{"code":"KZIKb46","price":109.86,"days":2373,"coupon":16.99,"yld":15.47,"risk":"ОК"},
-{"code":"KEGCb3","price":94.7,"days":3066,"coupon":11,"yld":11.62,"risk":"ОК"},
-{"code":"KFUSb1","price":93.15,"days":2129,"coupon":12,"yld":12.88,"risk":"ОК"},
-{"code":"HCBNb29","price":102.06,"days":993,"coupon":17.5,"yld":17.15,"risk":"сред"},
-{"code":"ATBNb3","price":100.59,"days":1022,"coupon":16.5,"yld":16.4,"risk":"сред"},
-];
+let DATA = [{"code": "BRKZb36", "price": 99.98, "days": 2510, "coupon": 15.6, "yld": 15.6, "risk": "ОК"}, {"code": "KZIKb46", "price": 109.86, "days": 2373, "coupon": 16.99, "yld": 15.47, "risk": "ОК"}, {"code": "KEGCb3", "price": 94.7, "days": 3066, "coupon": 11.0, "yld": 11.62, "risk": "ОК"}, {"code": "KFUSb1", "price": 93.15, "days": 2129, "coupon": 12.0, "yld": 12.88, "risk": "ОК"}, {"code": "JSBNb10", "price": 110.96, "days": 1550, "coupon": 17.5, "yld": 15.77, "risk": "ОК"}, {"code": "SMTLb2", "price": 101.0, "days": 1040, "coupon": 23.0, "yld": 22.77, "risk": "сред"}, {"code": "IDFRb8", "price": 112.93, "days": 1397, "coupon": 19.0, "yld": 16.82, "risk": "ОК"}, {"code": "HCBNb17", "price": 108.25, "days": 1312, "coupon": 19.1, "yld": 17.64, "risk": "ОК"}, {"code": "BTRKb8", "price": 87.7, "days": 1829, "coupon": 11.0, "yld": 12.54, "risk": "ОК"}, {"code": "CLSGb14", "price": 101.0, "days": 1057, "coupon": 21.5, "yld": 21.29, "risk": "сред"}, {"code": "CLSGb13", "price": 100.1, "days": 992, "coupon": 22.5, "yld": 22.48, "risk": "сред"}, {"code": "JSBNb8", "price": 111.1, "days": 1341, "coupon": 18.0, "yld": 16.2, "risk": "ОК"}, {"code": "BTRKb22", "price": 107.6, "days": 1280, "coupon": 17.5, "yld": 16.26, "risk": "ОК"}, {"code": "CLSGb16", "price": 101.5, "days": 891, "coupon": 23.0, "yld": 22.66, "risk": "сред"}, {"code": "TTLSb3", "price": 100.0, "days": 981, "coupon": 20.0, "yld": 20.0, "risk": "сред"}, {"code": "CLSGb11", "price": 101.79, "days": 864, "coupon": 23.0, "yld": 22.6, "risk": "сред"}, {"code": "JSBNb6", "price": 108.1, "days": 1258, "coupon": 16.5, "yld": 15.26, "risk": "ОК"}, {"code": "CLSGb15", "price": 99.5, "days": 794, "coupon": 23.0, "yld": 23.12, "risk": "сред"}, {"code": "CLSGb10", "price": 100.69, "days": 788, "coupon": 23.0, "yld": 22.84, "risk": "сред"}, {"code": "INBNb18", "price": 102.68, "days": 1021, "coupon": 17.25, "yld": 16.8, "risk": "ОК"}, {"code": "HCBNb29", "price": 102.06, "days": 993, "coupon": 17.5, "yld": 17.15, "risk": "ОК"}, {"code": "ATBNb3", "price": 100.59, "days": 1022, "coupon": 16.5, "yld": 16.4, "risk": "ОК"}, {"code": "CLSGb9", "price": 101.55, "days": 738, "coupon": 23.0, "yld": 22.65, "risk": "сред"}, {"code": "KAFIb12", "price": 105.0, "days": 966, "coupon": 16.85, "yld": 16.05, "risk": "ОК"}, {"code": "SMTLb1", "price": 99.0, "days": 692, "coupon": 22.0, "yld": 22.22, "risk": "сред"}, {"code": "QBTMb1", "price": 101.39, "days": 703, "coupon": 22.0, "yld": 21.7, "risk": "сред"}, {"code": "ERBBb2", "price": 100.1, "days": 602, "coupon": 25.0, "yld": 24.98, "risk": "сред"}, {"code": "JSBNb3", "price": 97.29, "days": 962, "coupon": 14.25, "yld": 14.65, "risk": "ОК"}, {"code": "CLSGb8", "price": 99.5, "days": 664, "coupon": 21.0, "yld": 21.11, "risk": "сред"}, {"code": "SCLBb2", "price": 101.0, "days": 616, "coupon": 21.0, "yld": 20.79, "risk": "сред"}, {"code": "GLLKb2", "price": 99.99, "days": 532, "coupon": 23.0, "yld": 23.0, "risk": "сред"}, {"code": "UZPAb1", "price": 102.4, "days": 552, "coupon": 21.5, "yld": 21.0, "risk": "сред"}, {"code": "SWPSb1", "price": 101.0, "days": 546, "coupon": 21.0, "yld": 20.79, "risk": "сред"}, {"code": "ORBSb8", "price": 101.83, "days": 509, "coupon": 22.0, "yld": 21.6, "risk": "сред"}, {"code": "TSSPb1", "price": 98.59, "days": 588, "coupon": 18.0, "yld": 18.26, "risk": "сред"}, {"code": "BIGDb11", "price": 102.2, "days": 539, "coupon": 20.0, "yld": 19.57, "risk": "сред"}, {"code": "BIGDb7", "price": 102.53, "days": 539, "coupon": 20.0, "yld": 19.51, "risk": "сред"}, {"code": "BIGDb8", "price": 102.53, "days": 539, "coupon": 20.0, "yld": 19.51, "risk": "сред"}, {"code": "KZTCb3", "price": 104.49, "days": 475, "coupon": 22.0, "yld": 21.05, "risk": "сред"}, {"code": "TTLSb2", "price": 100.0, "days": 981, "coupon": 10.0, "yld": 10.0, "risk": "ОК"}, {"code": "SCLBb3", "price": 110.0, "days": 959, "coupon": 11.0, "yld": 10.0, "risk": "ОК"}, {"code": "SCLBb1", "price": 99.98, "days": 428, "coupon": 20.25, "yld": 20.25, "risk": "сред"}, {"code": "MNLTb1", "price": 101.0, "days": 394, "coupon": 22.0, "yld": 21.78, "risk": "сред"}, {"code": "HCBNb13", "price": 101.0, "days": 455, "coupon": 18.15, "yld": 17.97, "risk": "ОК"}, {"code": "ORBSb6", "price": 100.0, "days": 724, "coupon": 9.5, "yld": 9.5, "risk": "ОК"}, {"code": "TSSPb8", "price": 99.98, "days": 340, "coupon": 20.0, "yld": 20.0, "risk": "сред"}, {"code": "QGLDb1", "price": 100.0, "days": 613, "coupon": 10.0, "yld": 10.0, "risk": "ОК"}, {"code": "BIGDb6", "price": 101.0, "days": 296, "coupon": 20.5, "yld": 20.3, "risk": "сред"}, {"code": "CLSGb4", "price": 100.0, "days": 228, "coupon": 20.5, "yld": 20.5, "risk": "сред"}, {"code": "ACARb1", "price": 98.9, "days": 229, "coupon": 19.5, "yld": 19.72, "risk": "сред"}, {"code": "KZIKb27", "price": 95.72, "days": 383, "coupon": 10.5, "yld": 10.97, "risk": "ОК"}, {"code": "HCBNb14", "price": 99.28, "days": 213, "coupon": 17.25, "yld": 17.38, "risk": "ОК"}, {"code": "BIGDb5", "price": 101.65, "days": 187, "coupon": 19.5, "yld": 19.18, "risk": "сред"}, {"code": "NCOMb16", "price": 99.98, "days": 321, "coupon": 11.0, "yld": 11.0, "risk": "ОК"}, {"code": "MRDNb1", "price": 100.0, "days": 289, "coupon": 10.0, "yld": 10.0, "risk": "ОК"}, {"code": "FIVEb7", "price": 100.0, "days": 110, "coupon": 25.0, "yld": 25.0, "risk": "сред"}, {"code": "SKKZb11", "price": 97.82, "days": 251, "coupon": 10.5, "yld": 10.73, "risk": "ОК"}, {"code": "ORBSb7", "price": 100.32, "days": 104, "coupon": 22.0, "yld": 21.93, "risk": "сред"}, {"code": "LZGRb21", "price": 104.0, "days": 86, "coupon": 22.0, "yld": 21.15, "risk": "сред"}, {"code": "FPSTb9", "price": 99.98, "days": 138, "coupon": 10.5, "yld": 10.5, "risk": "ОК"}, {"code": "KFUSb47", "price": 102.92, "days": 424, "coupon": 2.55, "yld": 2.48, "risk": "ОК"}, {"code": "KFUSb46", "price": 103.04, "days": 368, "coupon": 2.4, "yld": 2.33, "risk": "ОК"}, {"code": "NCOMb10", "price": 100.0, "days": 70, "coupon": 11.0, "yld": 11.0, "risk": "ОК"}, {"code": "GLLKb1", "price": 101.0, "days": 26, "coupon": 24.0, "yld": 23.76, "risk": "сред"}, {"code": "LZGRb18", "price": 100.6, "days": 52, "coupon": 10.5, "yld": 10.44, "risk": "ОК"}, {"code": "ASKQb1", "price": 94.8, "days": 9, "coupon": 9.0, "yld": 9.49, "risk": "ОК"}];
 function render(){
   const sum = parseFloat(document.getElementById('summa').value)||0;
-  document.getElementById('list').innerHTML = DATA.map(b=>{
+  const risk = document.getElementById('risk').value;
+  const maxDays = parseInt(document.getElementById('days').value);
+  const q = document.getElementById('search').value.toLowerCase();
+  let arr = DATA.filter(b=> (risk==='all'||b.risk===risk) && b.days<=maxDays && b.code.toLowerCase().includes(q));
+  arr.sort((a,b)=> (sum*b.yld/100/12*(b.days/30.44)) - (sum*a.yld/100/12*(a.days/30.44)));
+  document.getElementById('count').textContent = 'Показано: '+arr.length+' из '+DATA.length;
+  document.getElementById('list').innerHTML = arr.map(b=>{
     const monthly = sum * b.yld/100/12;
     const total = monthly * (b.days/30.44);
-    return `<div class="card"><b>${b.code}</b> • ${b.risk}<br>Цена ${b.price}% | Купон ${b.coupon}% | Доходность ${b.yld}%<br><b>${Math.round(monthly)} ₸ / мес</b> • всего ${Math.round(total)} ₸ • ${b.days} дней</div>`;
-  }).join('');
+    const cls = b.risk==='ОК'?'ok':(b.risk==='сред'?'sred':'risk');
+    return `<div class="card"><b>${b.code}</b> <span class="${cls}">• ${b.risk}</span><br><span style="font-size:13px;color:#555">Цена ${b.price}% | Купон ${b.coupon}% | Доходность ${b.yld}% | Дней ${b.days}</span><br><b>${Math.round(monthly)} ₸ / мес</b> • всего ${Math.round(total)} ₸</div>`;
+  }).join('') || '<p>Ничего не найдено</p>';
 }
 function refreshData(){
   document.getElementById('updated').textContent = 'обновляю...';
-  // Пробуем взять время с ноутбука-сервера, если не вышло - ставим текущее время телефона
-  fetch('http://'+location.hostname+':8000/api/bonds').then(r=>r.json()).then(j=>{
-    document.getElementById('updated').textContent = j.updated;
+  fetch('/api/bonds').then(r=>r.json()).then(j=>{
+    if(j.bonds && j.bonds.length>0) DATA = j.bonds;
+    document.getElementById('updated').textContent = j.updated || 'нет данных';
+    document.getElementById('status').textContent = j.status==='live' ? '✅ Настоящие цены с KASE' : '⏳ Показаны сохраненные цены, идет загрузка с KASE...';
+    render();
   }).catch(()=>{
-    const now = new Date().toLocaleString('ru-RU');
-    document.getElementById('updated').textContent = now + ' (показаны сохраненные цены, сервер не найден)';
+    document.getElementById('updated').textContent = 'сервер не найден, показаны сохраненные';
+    render();
   });
 }
-document.getElementById('summa').addEventListener('input',render);
-render();
+['summa','risk','days','search'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+render(); refreshData();
 </script></body></html>
