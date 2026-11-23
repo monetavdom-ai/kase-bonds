@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KASE Live</title>
+<style>body{font-family:Arial,sans-serif;margin:0;background:#f2f2f2}header{background:#0b3d91;color:#fff;padding:16px}header h1{margin:0;font-size:20px}.wrap{padding:12px;max-width:720px;margin:0 auto}.card{background:#fff;border-radius:12px;padding:12px;margin:10px 0}.ok{color:#0a7a42}.sred{color:#b77900}input,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;font-size:16px}button{width:100%;padding:12px;background:#0b3d91;color:#fff;border:0;border-radius:10px;font-size:16px}.live{background:#e6f4ea;padding:10px;border-radius:8px;margin:10px 0}</style></head>
+<body><header><h1>KASE — Облигации LIVE</h1><p>Цены обновляются каждые 15 минут с ноутбука</p></header>
+<div class="wrap">
+<div class="live">Последнее обновление: <b id="updated">еще не обновлялось</b><br><small>Облигации торгуются редко, 15 минут — это и есть реальное время для них</small></div>
+<button onclick="refreshData()">🔄 Обновить цены сейчас</button>
+<p><small>Если кнопка не работает — ты не подключен к домашнему Wi-Fi, где работает ноутбук-сервер</small></p>
+<label>Моя сумма, ₸</label><input id="summa" type="number" value="30000">
+<div id="list"></div>
+</div>
+<script>
+const DATA = [
+{"code":"BRKZb36","price":99.98,"days":2510,"coupon":15.6,"yld":15.6,"risk":"ОК"},
+{"code":"KZIKb46","price":109.86,"days":2373,"coupon":16.99,"yld":15.47,"risk":"ОК"},
+{"code":"KEGCb3","price":94.7,"days":3066,"coupon":11,"yld":11.62,"risk":"ОК"},
+{"code":"KFUSb1","price":93.15,"days":2129,"coupon":12,"yld":12.88,"risk":"ОК"},
+{"code":"HCBNb29","price":102.06,"days":993,"coupon":17.5,"yld":17.15,"risk":"сред"},
+{"code":"ATBNb3","price":100.59,"days":1022,"coupon":16.5,"yld":16.4,"risk":"сред"},
+];
+function render(){
+  const sum = parseFloat(document.getElementById('summa').value)||0;
+  document.getElementById('list').innerHTML = DATA.map(b=>{
+    const monthly = sum * b.yld/100/12;
+    const total = monthly * (b.days/30.44);
+    return `<div class="card"><b>${b.code}</b> • ${b.risk}<br>Цена ${b.price}% | Купон ${b.coupon}% | Доходность ${b.yld}%<br><b>${Math.round(monthly)} ₸ / мес</b> • всего ${Math.round(total)} ₸ • ${b.days} дней</div>`;
+  }).join('');
+}
+function refreshData(){
+  document.getElementById('updated').textContent = 'обновляю...';
+  // Пробуем взять время с ноутбука-сервера, если не вышло - ставим текущее время телефона
+  fetch('http://'+location.hostname+':8000/api/bonds').then(r=>r.json()).then(j=>{
+    document.getElementById('updated').textContent = j.updated;
+  }).catch(()=>{
+    const now = new Date().toLocaleString('ru-RU');
+    document.getElementById('updated').textContent = now + ' (показаны сохраненные цены, сервер не найден)';
+  });
+}
+document.getElementById('summa').addEventListener('input',render);
+render();
+</script></body></html>
