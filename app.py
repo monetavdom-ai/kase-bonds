@@ -59,7 +59,7 @@ def get_info(code):
         if price > 1000: price = price/100
         if price == 0: price = 100
         if coupon == 0 or days == 0: return None
-        currency = 'USD' if code in CODES_USD else 'KZT'
+        currency = 'USD' if code in CODES_USD else 'KZT'  # ВАЛЮТА ТОЛЬКО ПО КОДУ, не по тексту страницы!
         yld = coupon/price*100
         return {'code': code, 'price': price, 'days': days, 'coupon': coupon, 'yld': round(yld,2), 'risk': risk_for(code, price, coupon), 'currency': currency}
     except Exception as e:
@@ -101,8 +101,20 @@ def app_html(): return send_from_directory(".", "bonds_app_live.html")
 @app.route("/api/bonds")
 def api():
     try:
-        with open("bonds_live.json", encoding="utf-8") as f: return jsonify(json.load(f))
-    except:
+        with open("bonds_live.json", encoding="utf-8") as f: j = json.load(f)
+        # Если старый файл без валюты - чиним по коду, не отдаем битый
+        fixed = []
+        for b in j.get("bonds", []):
+            b["currency"] = "USD" if b["code"] in CODES_USD else "KZT"
+            # риск тоже пересчитываем по коду MF
+            if b.get("price", 100) < 50: b["risk"] = "МУСОР"
+            elif b.get("price", 100) < 80: b["risk"] = "ПРОВЕРЬ"
+            elif re.match(r'^MF', b["code"]): b["risk"] = "РИСК"
+            fixed.append(b)
+        j["bonds"] = fixed
+        return jsonify(j)
+    except Exception as e:
+        print(f"| api fallback: {e}")
         return jsonify({"updated": "еще нет", "status": "fallback", "bonds": make_fallback(), "kurs_usd": get_kurs(), "kurs_source": "живой с open.er-api.com"})
 threading.Thread(target=update_loop, daemon=True).start()
 if __name__ == "__main__":
